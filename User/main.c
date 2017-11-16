@@ -2,15 +2,16 @@
 
 int16_t motorSpeeds[3] = {0,0,0};
 
-/*void MyRun(void);*/
+void DataProc(void);
 
 int main()
 {	
-	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2 | RCC_APB1Periph_TIM3 |
-												 RCC_APB1Periph_TIM4 | RCC_APB1Periph_TIM6 , ENABLE);
-	RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO|RCC_APB2Periph_GPIOA|RCC_APB2Periph_USART1,ENABLE);
+	//Periphal Clocks Launcher
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2 | RCC_APB1Periph_TIM3 | RCC_APB1Periph_TIM4 | RCC_APB1Periph_TIM6, ENABLE);
+	RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO | RCC_APB2Periph_GPIOA | RCC_APB2Periph_USART1, ENABLE);
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM8 , ENABLE);
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA | RCC_APB2Periph_GPIOB | RCC_APB2Periph_GPIOC, ENABLE);
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_UART4, ENABLE);
 	
 	TIM8_PWM_Init();					//µç»úenable pwmÊä³ö
 	
@@ -28,14 +29,13 @@ int main()
 	
 	while(1)
 	{	
-		//MyRun();
-		//printf("in loop\n");
+		DataProc();
 		Delay_10us(5000);
 		move();
 	}
 }
 
-/*void MyRun(void)
+void DataProc(void)
 {
 	if(Rx1Counter == 24)
 	{
@@ -71,28 +71,31 @@ int main()
 	}
 	if(Rx2Counter == 32)
     {
-        if(Rx2Buffer[0] >= 0xFC && Rx2Buffer[30] == 0x0D && Rx2Buffer[31] == 0x0A)
-        {
-					info.byteShootOut = Rx2Buffer[0] & 0x02;
-					info.byteShootSide = Rx2Buffer[0] & 0x01;
-					info.byteMatchStatus = (Rx2Buffer[1] & 0xC0) >> 6;
-					info.uTimeByRounds = (((uint16_t)(Rx2Buffer[1] & 0x3F) << 8) | Rx2Buffer[2]);
-					info.ptSelf.X = Rx2Buffer[3];
-					info.ptSelf.Y = (((uint16_t)Rx2Buffer[4] << 8) | Rx2Buffer[5]);
-					info.ptRival.X = Rx2Buffer[6];
-					info.ptRival.Y = (((uint16_t)Rx2Buffer[7] << 8) | Rx2Buffer[8]);
-					info.ptBall.X = Rx2Buffer[9];
-					info.ptBall.Y = (((uint16_t)Rx2Buffer[10] << 8) | Rx2Buffer[11]);
-					info.nHaltRoundsSelf = (((uint16_t)Rx2Buffer[12] << 8) | Rx2Buffer[13]);
-					info.nHaltRoundsRival = (((uint16_t)Rx2Buffer[14] << 8) | Rx2Buffer[15]);
-					info.nEvilSelf = Rx2Buffer[16];
-					info.nEvilRival = Rx2Buffer[17];
-					info.nScoreSelf = Rx2Buffer[18];
-					info.nScoreRival = Rx2Buffer[19];
-        }
-			addNewPoint(info.ptSelf, info.ptBall);
-			TargetAngleArr[currentIndex] = relaAngle(info.ptSelf, info.ptBall);		
-			//countNewPoint = 0;
-      Rx2Counter = 0;
+		putchar('b');
+		putchar('\n');
+		if(Rx2Buffer[0] >= 0xFC && Rx2Buffer[30] == 0x0D && Rx2Buffer[31] == 0x0A)
+		{
+			info.byteShootOut = Rx2Buffer[0] & 0x02;
+			info.byteShootSide = Rx2Buffer[0] & 0x01;
+			info.byteMatchStatus = (Rx2Buffer[1] & 0xC0) >> 6;
+			info.uTimeByRounds = (((uint16_t)(Rx2Buffer[1] & 0x3F) << 8) | Rx2Buffer[2]);
+			info.ptSelf.X = Rx2Buffer[3];
+			info.ptSelf.Y = (((uint16_t)Rx2Buffer[4] << 8) | Rx2Buffer[5]);
+			info.ptRival.X = Rx2Buffer[6];
+			info.ptRival.Y = (((uint16_t)Rx2Buffer[7] << 8) | Rx2Buffer[8]);
+			info.ptBall.X = Rx2Buffer[9];
+			info.ptBall.Y = (((uint16_t)Rx2Buffer[10] << 8) | Rx2Buffer[11]);
+			info.nHaltRoundsSelf = (((uint16_t)Rx2Buffer[12] << 8) | Rx2Buffer[13]);
+			info.nHaltRoundsRival = (((uint16_t)Rx2Buffer[14] << 8) | Rx2Buffer[15]);
+			info.nEvilSelf = Rx2Buffer[16];
+			info.nEvilRival = Rx2Buffer[17];
+			info.nScoreSelf = Rx2Buffer[18];
+			info.nScoreRival = Rx2Buffer[19];
+		}
+		addNewPoint(info.ptSelf, info.ptBall);
+		printf("ballx:%d\n",info.ptBall.X); 
+		Rx2Counter = 0;
+		putchar('e');
+		putchar('\n');
     }
-}*/
+}

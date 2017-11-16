@@ -151,13 +151,12 @@ void SysTick_Handler(void)
 /******************************************************************************/
 
 /**
-  * @brief  This function handles PPP interrupt request.
+  * @brief  This function handles USART1 interrupt request.
   * @param  None
   * @retval None
   */
 void USART1_IRQHandler(void)
 {
-	
 	/* When the serial recieve a byte, do the work below. */
 	if(USART_GetITStatus(USART1, USART_IT_RXNE) != RESET)
 	{
@@ -167,40 +166,10 @@ void USART1_IRQHandler(void)
 		uint8_t ch = USART_ReceiveData(USART1); 
 		/* Do something with this byte. */
 		// putchar(ch);
-		if(Rx2Counter != MAX_BUFFER_SIZE)
-			Rx2Buffer[Rx2Counter++] = ch;
+		if(Rx1Counter != MAX_BUFFER_SIZE)
+			Rx1Buffer[Rx1Counter++] = ch;
 		/* Try not to use printf() or scanf(), for their lacking of efficiency. */
-	}
-		if(Rx2Counter == 32)
-    {
-			putchar('b');
-			putchar('\n');
-      if(Rx2Buffer[0] >= 0xFC && Rx2Buffer[30] == 0x0D && Rx2Buffer[31] == 0x0A)
-      {
-					info.byteShootOut = Rx2Buffer[0] & 0x02;
-					info.byteShootSide = Rx2Buffer[0] & 0x01;
-					info.byteMatchStatus = (Rx2Buffer[1] & 0xC0) >> 6;
-					info.uTimeByRounds = (((uint16_t)(Rx2Buffer[1] & 0x3F) << 8) | Rx2Buffer[2]);
-					info.ptSelf.X = Rx2Buffer[3];
-					info.ptSelf.Y = (((uint16_t)Rx2Buffer[4] << 8) | Rx2Buffer[5]);
-					info.ptRival.X = Rx2Buffer[6];
-					info.ptRival.Y = (((uint16_t)Rx2Buffer[7] << 8) | Rx2Buffer[8]);
-					info.ptBall.X = Rx2Buffer[9];
-					info.ptBall.Y = (((uint16_t)Rx2Buffer[10] << 8) | Rx2Buffer[11]);
-					info.nHaltRoundsSelf = (((uint16_t)Rx2Buffer[12] << 8) | Rx2Buffer[13]);
-					info.nHaltRoundsRival = (((uint16_t)Rx2Buffer[14] << 8) | Rx2Buffer[15]);
-					info.nEvilSelf = Rx2Buffer[16];
-					info.nEvilRival = Rx2Buffer[17];
-					info.nScoreSelf = Rx2Buffer[18];
-					info.nScoreRival = Rx2Buffer[19];
-       }
-			addNewPoint(info.ptSelf, info.ptBall);
-			printf("ballx:%d\n",info.ptBall.X); 
-      Rx2Counter = 0;
-			putchar('e');
-			putchar('\n');
-    }
-		
+	}	
 }
 
 /**
@@ -221,6 +190,29 @@ void TIM6_IRQHandler(void)
 			
 			Encoder_Reset();			//±àÂëÆ÷ÇåÁã
     }
+}
+
+/**
+  * @brief  This function handles USART4 interrupt request.
+  * @param  None
+  * @retval None
+  */ 
+
+void USART4_IRQHandler(void)
+{
+	/* When the serial recieve a byte, do the work below. */
+	if(USART_GetITStatus(USART1, USART_IT_RXNE) != RESET)
+	{
+		/* Clear the flag of recieve buffer not empty. */
+		USART_ClearITPendingBit(USART1,USART_IT_RXNE);
+		/* Get the byte. */
+		uint8_t ch = USART_ReceiveData(USART1); 
+		/* Do something with this byte. */
+		// putchar(ch);
+		if(Rx2Counter != MAX_BUFFER_SIZE)
+			Rx2Buffer[Rx2Counter++] = ch;
+		/* Try not to use printf() or scanf(), for their lacking of efficiency. */
+	}
 }
 
 /******************* (C) COPYRIGHT 2011 STMicroelectronics *****END OF FILE****/
