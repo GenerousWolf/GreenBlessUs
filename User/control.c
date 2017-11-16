@@ -1,13 +1,15 @@
 #include "stdafx.h"
 
+volatile s16 motorSpeedMeas[3];
+
 volatile Point SelfPointArr[Max_Storage];
 volatile Point BallPointArr[Max_Storage];
-volatile s16 SelfAngleArr[Max_Storage];		//小车朝向,absolute angle
-volatile s16 TargetAngleArr[Max_Storage];	//球相对小车的角度,absolute angle
+volatile s16 SelfAngleArr[Max_Storage];				//小车朝向,absolute angle
+volatile s16 TargetAngleArr[Max_Storage];			//球相对小车的角度,absolute angle
 volatile u8 moveState;				//0 for stop, 1 for rotate, 2 for straightfoward
-volatile s8 currentIndex;									//current index in the array
-volatile s8 rotateStartIndex; 							//index when starting rotate;
-volatile uint8_t countNewPoint;
+volatile s8 currentIndex = 0;									//current index in the array
+volatile s8 rotateStartIndex = 0; 							//index when starting rotate;
+volatile uint8_t countNewPoint = 0;
 
 volatile MatchInfo info;
 
@@ -89,8 +91,29 @@ int Encoder_Read(int motornum)
 	return (s16)count;
 }
 
-//rotate is from -314 to 314
+void motorspeedread(void)
+{
+	motorSpeedMeas[0] = TIM2 -> CNT;
+	motorSpeedMeas[1] = TIM3 -> CNT;
+	motorSpeedMeas[2] = TIM4 -> CNT;
+}
 
+//TIM6 trigger a interupt per 20ms
+void TIM6_Init(void)
+{
+    TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
+
+    TIM_TimeBaseStructure.TIM_Period = 200; //20ms 
+    TIM_TimeBaseStructure.TIM_Prescaler =(7200-1);
+    TIM_TimeBaseStructure.TIM_ClockDivision = 0;
+    TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
+    TIM_TimeBaseInit(TIM6, &TIM_TimeBaseStructure);
+
+    TIM_ITConfig(TIM6,TIM_IT_Update,ENABLE);
+    TIM_Cmd(TIM6, ENABLE);                    
+}
+
+//rotate is from -314 to 314
 void RotateStop(int16_t rotateAngle){
 	rotateAngle *= 11;
 	rotateAngle /= 2;
@@ -105,20 +128,23 @@ void RotateStop(int16_t rotateAngle){
 void Rotate(s16 angle){
 	moveState = 1;
 	rotateStartIndex = currentIndex;
-	if(angle > 0){
+	if(angle > 157){					//方向角偏移超过60°,原地旋转
 		Motor_Speed_Control(20,0);
 		Motor_Speed_Control(20,1);
 		Motor_Speed_Control(20,2);
 	}
-	else if(angle < 0){
+	else {
+		if(angle < -157){
 			Motor_Speed_Control(-20,0);
 			Motor_Speed_Control(-20,1);
 			Motor_Speed_Control(-20,2);
 		}
-	else{
-		Motor_Speed_Control(0,0);
-		Motor_Speed_Control(0,1);
-		Motor_Speed_Control(0,2);
+		else{
+			if(angle > 30)
+			Motor_Speed_Control(0,0);
+			Motor_Speed_Control(0,1);
+			Motor_Speed_Control(0,2);
+		}
 	}
 	Encoder_Reset();
 }
@@ -142,12 +168,24 @@ int moveAngle(Point current, Point prev){
 
 void getSelfAngle(void)
 {
-	volatile float angle = -112 * AngYaw;
-	if(angle > 314) angle -= 628;
+	int angle = (int)(-112 * AngYaw);
+	
+	if(angle > 314) {
+		angle += 314;
+		angle %= 628;
+		angle -= 314;
+	}
 	else
-		if(angle < -314) angle += 628;
-	printf("self:%f\n",angle);
-	SelfAngleArr[currentIndex] = (int)angle;
+		if(angle < -314) {
+			angle *= -1;
+			angle += 314;
+			angle %= 628;
+			angle -= 314;
+			angle *= -1;
+		}
+	
+	//printf("self:%f\n",angle);
+	SelfAngleArr[currentIndex] = angle;
 }	
 
 void Stop(void){
@@ -158,7 +196,6 @@ void Stop(void){
 }
 
 void move(void){
-	//
 	s16 relativeAngle = TargetAngleArr[currentIndex] - SelfAngleArr[currentIndex];
 	if(relativeAngle > 314) {
 		relativeAngle += 314;
@@ -174,15 +211,7 @@ void move(void){
 			relativeAngle *= -1;
 		}
 	
-	if(relativeAngle < 30 && relativeAngle > -30)
-	{
-		Stop();
-	}
-	else
-	{
-		Rotate(relativeAngle);
-		printf("ball:%d\n",TargetAngleArr[currentIndex]);
-	}
+	Rotate(relativeAngle);
 }
 
 int Arrived(void)
@@ -204,6 +233,7 @@ void addNewPoint(Point selfPoint, Point ballPoint)
 	currentIndex %= Max_Storage;
 	SelfPointArr[currentIndex] = selfPoint;
 	BallPointArr[currentIndex] = ballPoint;
+	TargetAngleArr[currentIndex] = relaAngle(info.ptSelf, info.ptBall);
 	countNewPoint++;
 }
 

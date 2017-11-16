@@ -37,6 +37,9 @@ typedef struct tagMATCHINFO
 	Point ptRival;
 }MatchInfo;
 
+extern volatile s16 motorSpeedMeas[3];
+
+
 extern volatile Point SelfPointArr[Max_Storage];
 extern volatile Point BallPointArr[Max_Storage];
 extern volatile s16 SelfAngleArr[Max_Storage];		//Ð¡³µ³¯Ïò,absolute angle
@@ -50,6 +53,9 @@ extern volatile uint8_t countNewPoint;
 void Encoder_Init(void);
 void Encoder_Reset(void);
 int Encoder_Read(int motornum);
+void motorspeedread(void);
+
+void TIM6_Init(void);
 
 void RotateStop(int16_t rotateAngle);
 void Rotate(s16 angle);
