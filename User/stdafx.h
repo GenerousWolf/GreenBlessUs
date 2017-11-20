@@ -1,4 +1,4 @@
-#ifndef __STDAFX_H
+﻿#ifndef __STDAFX_H
 #define __STDAFX_H
 
 // All Dependencies

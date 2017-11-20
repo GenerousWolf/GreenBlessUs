@@ -166,8 +166,8 @@ void USART1_IRQHandler(void)
 		uint8_t ch = USART_ReceiveData(USART1); 
 		/* Do something with this byte. */
 		// putchar(ch);
-		if(Rx1Counter != MAX_BUFFER_SIZE)
-			Rx1Buffer[Rx1Counter++] = ch;
+		if(Rx2Counter != MAX_BUFFER_SIZE)
+			Rx2Buffer[Rx2Counter++] = ch;
 		/* Try not to use printf() or scanf(), for their lacking of efficiency. */
 	}	
 }
@@ -182,13 +182,12 @@ void TIM6_IRQHandler(void)
 {  
 	if (TIM_GetITStatus(TIM6, TIM_IT_Update) != RESET)
     {
-			TIM_ClearITPendingBit(TIM6, TIM_IT_Update);
-			
-			motorspeedread();			//¶ÁÈ¡±àÂëÆ÷Êı¾İ
-			GetAllFromMPU();			//¹ßµ¼»ı·Ö
-			getSelfAngle();				//»ñÈ¡µ±Ç°×ÔÉí³¯Ïò
-			
-			Encoder_Reset();			//±àÂëÆ÷ÇåÁã
+		TIM_ClearITPendingBit(TIM6, TIM_IT_Update);
+		motorspeedread();			//è¯»å–ç¼–ç å™¨æ•°æ®
+		GetAllFromMPU();			//æƒ¯å¯¼ç§¯åˆ†
+		//getSelfAngle();				//è·å–å½“å‰è‡ªèº«æœå‘
+		//Encoder_Reset();			//ç¼–ç å™¨æ¸…é›¶
+		
     }
 }
 
@@ -208,7 +207,6 @@ void USART4_IRQHandler(void)
 		/* Get the byte. */
 		uint8_t ch = USART_ReceiveData(USART1); 
 		/* Do something with this byte. */
-		// putchar(ch);
 		if(Rx2Counter != MAX_BUFFER_SIZE)
 			Rx2Buffer[Rx2Counter++] = ch;
 		/* Try not to use printf() or scanf(), for their lacking of efficiency. */

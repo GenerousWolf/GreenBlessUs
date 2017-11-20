@@ -13,11 +13,11 @@ int main()
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA | RCC_APB2Periph_GPIOB | RCC_APB2Periph_GPIOC, ENABLE);
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_UART4, ENABLE);
 	
-	TIM8_PWM_Init();					//电机enable pwm输出
+	TIM8_PWM_Init();					//鐢垫満enable pwm杈撳嚭
 	
 	SysTick_Init();
 	USART1_Config();
-	M_Init();													//电机正负控制
+	M_Init();													//鐢垫満姝ｈ礋鎺у埗
 	Encoder_Init();
 	I2C_MPU6050_Init();
 	InitMPU6050();
@@ -29,15 +29,15 @@ int main()
 	
 	while(1)
 	{	
-		DataProc();
-		Delay_10us(5000);
-		move();
+		//DataProc();
+		Delay_10us(10000);
+		//move();
 	}
 }
 
 void DataProc(void)
 {
-	if(Rx1Counter == 24)
+	/*if(Rx1Counter == 24)
 	{
 		uint8_t uPos = 0; 
 		for(int i = 0; i < 3; ++i)
@@ -68,11 +68,9 @@ void DataProc(void)
 		Motor_Speed_Control(motorSpeeds[0],0);
 		Motor_Speed_Control(motorSpeeds[1],1);
 		Motor_Speed_Control(motorSpeeds[2],2);
-	}
+	}*/
 	if(Rx2Counter == 32)
     {
-		putchar('b');
-		putchar('\n');
 		if(Rx2Buffer[0] >= 0xFC && Rx2Buffer[30] == 0x0D && Rx2Buffer[31] == 0x0A)
 		{
 			info.byteShootOut = Rx2Buffer[0] & 0x02;
@@ -93,9 +91,7 @@ void DataProc(void)
 			info.nScoreRival = Rx2Buffer[19];
 		}
 		addNewPoint(info.ptSelf, info.ptBall);
-		printf("ballx:%d\n",info.ptBall.X); 
 		Rx2Counter = 0;
-		putchar('e');
-		putchar('\n');
+		putchar('R');
     }
 }

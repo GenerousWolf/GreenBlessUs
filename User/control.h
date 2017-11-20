@@ -6,7 +6,9 @@
 #define MOTOR0_TIM TIM2
 #define MOTOR1_TIM TIM3
 #define MOTOR2_TIM TIM4
-#define Max_Storage 100
+#define Max_Storage (100)
+#define PI (3.1415926535f)
+#define RADIUS_VEHI (10)
 
 typedef int16_t XType, YType;
 
@@ -38,12 +40,11 @@ typedef struct tagMATCHINFO
 }MatchInfo;
 
 extern volatile s16 motorSpeedMeas[3];
-
-
+extern volatile float_t veloVehi[3];
 extern volatile Point SelfPointArr[Max_Storage];
 extern volatile Point BallPointArr[Max_Storage];
-extern volatile s16 SelfAngleArr[Max_Storage];		//小车朝向,absolute angle
-extern volatile s16 TargetAngleArr[Max_Storage];	//球相对小车的角度,absolute angle
+extern volatile s16 SelfAngleArr[Max_Storage];		//灏忚溅鏈濆悜,absolute angle
+extern volatile s16 TargetAngleArr[Max_Storage];	//鐞冪浉瀵瑰皬杞︾殑瑙掑害,absolute angle
 extern volatile u8 moveState;				//0 for stop, 1 for rotate, 2 for straightfoward
 extern volatile s8 currentIndex;									//current index in the array
 extern volatile s8 rotateStartIndex; 							//index when starting rotate;
@@ -67,8 +68,5 @@ void getSelfAngle(void);
 
 void move(void);
 void Stop(void);
-int Arrived(void);
 void addNewPoint(Point selfPoint, Point ballPoint);
-uint32_t GetDistanceSquare(Point p1, Point p2);
-
 #endif

@@ -3,8 +3,8 @@
 //----------------------------------------------------------------------------------------------------
 // Definitions
 
-#define Kp 0.005f                   // proportional gain governs rate of convergence to accelerometer/magnetometer
-#define Ki 0.0000f                	// integral gain governs rate of convergence of gyroscope biases
+#define Kp 0.005f                   	// proportional gain governs rate of convergence to accelerometer/magnetometer
+#define Ki 0.000001f                		// integral gain governs rate of convergence of gyroscope biases
 #define halfT 0.01f                	// half the sample period
 
 //---------------------------------------------------------------------------------------------------
@@ -74,10 +74,12 @@ void GetAllFromMPU(void)
 	wX = GetData(GYRO_XOUT_H) / 32768.0f * MaxAngle - wx0;
 	wY = GetData(GYRO_YOUT_H) / 32768.0f * MaxAngle - wy0;
 	wZ = GetData(GYRO_ZOUT_H) / 32768.0f * MaxAngle - wz0;
-	wX = wX / 180.0f * 3.14f;
-	wY = wY / 180.0f * 3.14f;
-	wZ = wZ / 180.0f * 3.14f;
+	wX = wX / 180.0f * 3.1415926535f;
+	wY = wY / 180.0f * 3.1415926535f;
+	wZ = wZ / 180.0f * 3.1415926535f;
+	//printf("aX = %f,aY = %f,aZ = %f,wX = %f,wY = %f, wZ = %f\n",aX,aY,aZ,wX,wY,wZ);
 	GetAngles(aX,aY,aZ,wX,wY,wZ);
+	printf("Angle:%f\n", AngYaw);
 }
 
 void SetupAllPivot(void)

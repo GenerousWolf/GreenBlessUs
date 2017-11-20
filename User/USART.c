@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 
 uint32_t Rx1Counter=0;
 uint8_t Rx1Buffer[MAX_BUFFER_SIZE];

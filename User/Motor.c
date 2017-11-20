@@ -1,39 +1,37 @@
 #include "stdafx.h"
+
 void TIM8_PWM_Init(void)
 {
 	GPIO_InitTypeDef GPIO_InitStructure;
 	TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
-  TIM_OCInitTypeDef  TIM_OCInitStructure;
+	TIM_OCInitTypeDef  TIM_OCInitStructure;
 
 	//motor enable pwm output		
 	GPIO_InitStructure.GPIO_Pin =  GPIO_Pin_6 | GPIO_Pin_7 | GPIO_Pin_8;
-  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;                
-  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-  GPIO_Init(GPIOC, &GPIO_InitStructure);	
+	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;                
+	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+	GPIO_Init(GPIOC, &GPIO_InitStructure);	
          
-  TIM_TimeBaseStructure.TIM_Period = 900;
-  TIM_TimeBaseStructure.TIM_Prescaler = 0;           
-  TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV1 ;        
-  TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up; 
-  TIM_TimeBaseInit(TIM8, &TIM_TimeBaseStructure);
+	TIM_TimeBaseStructure.TIM_Period = 900;
+	TIM_TimeBaseStructure.TIM_Prescaler = 0;           
+	TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV1 ;        
+	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up; 
+	TIM_TimeBaseInit(TIM8, &TIM_TimeBaseStructure);
 	
+	TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;         
+	TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;        
+	TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;  
 
-  TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;         
-  TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;        
-  // TIM_OCInitStructure.TIM_Pulse = 0;       //???  2000是自己加的
-  TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;  
-	// TIM_OCInitStructure.TIM_OutputNState = TIM_OutputNState_Disable;
-	
-  TIM_OC1Init(TIM8, &TIM_OCInitStructure);             
-  TIM_OC1PreloadConfig(TIM8, TIM_OCPreload_Enable);	
+	TIM_OC1Init(TIM8, &TIM_OCInitStructure);             
+	TIM_OC1PreloadConfig(TIM8, TIM_OCPreload_Enable);	
 	TIM_OC2Init(TIM8, &TIM_OCInitStructure);             
-  TIM_OC2PreloadConfig(TIM8, TIM_OCPreload_Enable);
+	TIM_OC2PreloadConfig(TIM8, TIM_OCPreload_Enable);
 	TIM_OC3Init(TIM8, &TIM_OCInitStructure);             
-  TIM_OC3PreloadConfig(TIM8, TIM_OCPreload_Enable);	
+	TIM_OC3PreloadConfig(TIM8, TIM_OCPreload_Enable);	
 	TIM_OC4Init(TIM8, &TIM_OCInitStructure);             
-  TIM_OC4PreloadConfig(TIM8, TIM_OCPreload_Enable);
+	TIM_OC4PreloadConfig(TIM8, TIM_OCPreload_Enable);
 
-  TIM_Cmd(TIM8, ENABLE);  
+	TIM_Cmd(TIM8, ENABLE);  
 	TIM_CtrlPWMOutputs(TIM8,ENABLE);
 }
 
@@ -43,11 +41,11 @@ void M_Init(void)
 {	
 	GPIO_InitTypeDef GPIO_InitStructure;
 	
-	//motor 正负控制
+	//motor 姝ｈ礋鎺у埗
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2 | GPIO_Pin_3;
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP; 
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-  GPIO_Init(GPIOA, &GPIO_InitStructure);
+	GPIO_Init(GPIOA, &GPIO_InitStructure);
 	
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1 |GPIO_Pin_8 | GPIO_Pin_9;
 	GPIO_Init(GPIOB, &GPIO_InitStructure);
@@ -62,12 +60,12 @@ void M_Init(void)
 //TIM2 - motor 0 feedback
 //TIM3 - motor 1 feedback
 //TIM4 - motor 2 feedback
-void Motor_Speed_Control(s16 motorSpeed, u8 wheelNum){
-	s16 speed = 0 ;	
-	
-  if(motorSpeed>100)  speed = 100;
-	  else if (motorSpeed<-100)  speed = -100;
-			else  speed = motorSpeed;
+void Motor_Speed_Control(s16 motorSpeed, u8 wheelNum)
+{
+	s16 speed = 0 ;		
+	if(motorSpeed>100)  speed = 100;
+		else if (motorSpeed<-100)  speed = -100;
+				else  speed = motorSpeed;
 	if(speed == 0)
 	{
 		switch(wheelNum)

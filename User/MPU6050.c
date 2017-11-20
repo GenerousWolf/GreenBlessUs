@@ -1,32 +1,32 @@
-/******************** (C) COPYRIGHT 2012  **************************
+ï»¿/******************** (C) COPYRIGHT 2012  **************************
 
- * Ó²¼şÁ¬½Ó£º-----------------
+ * ç¡¬ä»¶è¿æ¥ï¼š-----------------
  *          |                 |
  *          |  PB10-I2C2_SCL		|
  *          |  PB11-I2C2_SDA   |
  *          |                 |
  *           -----------------
- * ¿â°æ±¾  £ºST3.5.0
- * ×÷Õß    £º Orange 
+ * åº“ç‰ˆæœ¬  ï¼šST3.5.0
+ * ä½œè€…    ï¼š Orange 
 **********************************************************************************/
 #include "mpu6050.h"
 
 /*
- * º¯ÊıÃû£ºI2C_GPIO_Config
- * ÃèÊö  £ºI2C2 I/OÅäÖÃ
- * ÊäÈë  £ºÎŞ
- * Êä³ö  £ºÎŞ
- * µ÷ÓÃ  £ºÄÚ²¿µ÷ÓÃ
+ * å‡½æ•°åï¼šI2C_GPIO_Config
+ * æè¿°  ï¼šI2C2 I/Oé…ç½®
+ * è¾“å…¥  ï¼šæ— 
+ * è¾“å‡º  ï¼šæ— 
+ * è°ƒç”¨  ï¼šå†…éƒ¨è°ƒç”¨
  */
 static void I2C_GPIO_Config(void)
 {
 	GPIO_InitTypeDef GPIO_InitStructure;
 	
-		/* Ê¹ÄÜÓë I2C2 ÓĞ¹ØµÄÊ±ÖÓ */
+		/* ä½¿èƒ½ä¸ I2C2 æœ‰å…³çš„æ—¶é’Ÿ */
 	RCC_APB2PeriphClockCmd  (RCC_APB2Periph_GPIOB,ENABLE ); 
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_I2C2,ENABLE);  
 
-	 /* PB6-I2C2_SCL¡¢PB7-I2C2_SDA*/
+	 /* PB6-I2C2_SCLã€PB7-I2C2_SDA*/
 	GPIO_InitStructure.GPIO_Pin = GPIO_Pin_10 | GPIO_Pin_11; 
 	GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz; 
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_OD; 
@@ -35,18 +35,18 @@ static void I2C_GPIO_Config(void)
 
 
 /*
- * º¯ÊıÃû£ºI2C_Mode_Config
- * ÃèÊö  £ºI2C ¹¤×÷Ä£Ê½ÅäÖÃ
- * ÊäÈë  £ºÎŞ
- * Êä³ö  £ºÎŞ
- * µ÷ÓÃ  £ºÄÚ²¿µ÷ÓÃ
+ * å‡½æ•°åï¼šI2C_Mode_Config
+ * æè¿°  ï¼šI2C å·¥ä½œæ¨¡å¼é…ç½®
+ * è¾“å…¥  ï¼šæ— 
+ * è¾“å‡º  ï¼šæ— 
+ * è°ƒç”¨  ï¼šå†…éƒ¨è°ƒç”¨
  */
 static void I2C_Mode_Config(void)
 {
 	 /* Initialize the I2C2 according to the I2C_InitStructure members */ 
 	I2C_InitTypeDef I2C_InitStructure; 
 	 
-	  /* I2C ÅäÖÃ */
+	  /* I2C é…ç½® */
 	I2C_InitStructure.I2C_Mode = I2C_Mode_I2C ; 
 	//I2C_InitStructure.I2C_DutyCycle = I2C_DutyCycle_2; 
 	//I2C_InitStructure.I2C_OwnAddress1 = SlaveAddress; 
@@ -55,21 +55,21 @@ static void I2C_Mode_Config(void)
 	I2C_InitStructure.I2C_ClockSpeed = 50000; 
 
 
-	/* I2C2 ³õÊ¼»¯ */
+	/* I2C2 åˆå§‹åŒ– */
 	I2C_Init(I2C2, &I2C_InitStructure);	   
 	
-	/* Ê¹ÄÜ I2C2 */
+	/* ä½¿èƒ½ I2C2 */
 	I2C_Cmd  (I2C2,ENABLE); 
-	/*ÔÊĞíÓ¦´ğÄ£Ê½*/
+	/*å…è®¸åº”ç­”æ¨¡å¼*/
 	I2C_AcknowledgeConfig(I2C2, ENABLE);   
 }
 /***************************************************************************************/
 /*
- * º¯ÊıÃû£ºI2C_MMA_Init
- * ÃèÊö  £ºI2C ÍâÉè(MMA7455)³õÊ¼»¯
- * ÊäÈë  £ºÎŞ
- * Êä³ö  £ºÎŞ
- * µ÷ÓÃ  £ºÍâ²¿µ÷ÓÃ
+ * å‡½æ•°åï¼šI2C_MMA_Init
+ * æè¿°  ï¼šI2C å¤–è®¾(MMA7455)åˆå§‹åŒ–
+ * è¾“å…¥  ï¼šæ— 
+ * è¾“å‡º  ï¼šæ— 
+ * è°ƒç”¨  ï¼šå¤–éƒ¨è°ƒç”¨
  */
 void I2C_MPU6050_Init(void)
 {	   
@@ -78,13 +78,13 @@ void I2C_MPU6050_Init(void)
 }  
 
 /*
- * º¯ÊıÃû£ºI2C_ByteWrite
- * ÃèÊö  £ºĞ´Ò»¸ö×Ö½Úµ½I2CÉè±¸¼Ä´æÆ÷ÖĞ
- * ÊäÈë  £ºREG_Address ½ÓÊÕÊı¾İµÄIICÉè±¸¼Ä´æÆ÷µÄµØÖ· 
- *         REG_data ´ıĞ´ÈëµÄÊı¾İ
- * Êä³ö  £ºÎŞ
- * ·µ»Ø  £ºÎŞ
- * µ÷ÓÃ  £ºÄÚ²¿µ÷ÓÃ
+ * å‡½æ•°åï¼šI2C_ByteWrite
+ * æè¿°  ï¼šå†™ä¸€ä¸ªå­—èŠ‚åˆ°I2Cè®¾å¤‡å¯„å­˜å™¨ä¸­
+ * è¾“å…¥  ï¼šREG_Address æ¥æ”¶æ•°æ®çš„IICè®¾å¤‡å¯„å­˜å™¨çš„åœ°å€ 
+ *         REG_data å¾…å†™å…¥çš„æ•°æ®
+ * è¾“å‡º  ï¼šæ— 
+ * è¿”å›  ï¼šæ— 
+ * è°ƒç”¨  ï¼šå†…éƒ¨è°ƒç”¨
  */	
 void I2C_ByteWrite(uint8_t REG_Address,uint8_t REG_data)
 {
@@ -111,12 +111,12 @@ I2C_GenerateSTOP(I2C2,ENABLE);
 
 
 /*
- * º¯ÊıÃû£ºI2C_ByteRead
- * ÃèÊö  £º´ÓIICÉè±¸¼Ä´æÆ÷ÖĞ¶ÁÈ¡Ò»¸ö×Ö½Ú
- * ÊäÈë  £ºREG_Address ¶ÁÈ¡Êı¾İµÄ¼Ä´æÆ÷µÄµØÖ· 
- * Êä³ö  £ºÎŞ
- * ·µ»Ø  £ºÎŞ
- * µ÷ÓÃ  £ºÄÚ²¿µ÷ÓÃ 
+ * å‡½æ•°åï¼šI2C_ByteRead
+ * æè¿°  ï¼šä»IICè®¾å¤‡å¯„å­˜å™¨ä¸­è¯»å–ä¸€ä¸ªå­—èŠ‚
+ * è¾“å…¥  ï¼šREG_Address è¯»å–æ•°æ®çš„å¯„å­˜å™¨çš„åœ°å€ 
+ * è¾“å‡º  ï¼šæ— 
+ * è¿”å›  ï¼šæ— 
+ * è°ƒç”¨  ï¼šå†…éƒ¨è°ƒç”¨ 
 */
 uint8_t I2C_ByteRead(uint8_t REG_Address)
 {
@@ -124,25 +124,25 @@ uint8_t REG_data;
 
 while(I2C_GetFlagStatus(I2C2,I2C_FLAG_BUSY));
 
-I2C_GenerateSTART(I2C2,ENABLE);//ÆğÊ¼ĞÅºÅ
+I2C_GenerateSTART(I2C2,ENABLE);//èµ·å§‹ä¿¡å·
 
 while(!I2C_CheckEvent(I2C2,I2C_EVENT_MASTER_MODE_SELECT));
 
-I2C_Send7bitAddress(I2C2,SlaveAddress,I2C_Direction_Transmitter);//·¢ËÍÉè±¸µØÖ·+Ğ´ĞÅºÅ
+I2C_Send7bitAddress(I2C2,SlaveAddress,I2C_Direction_Transmitter);//å‘é€è®¾å¤‡åœ°å€+å†™ä¿¡å·
 
 while(!I2C_CheckEvent(I2C2,I2C_EVENT_MASTER_TRANSMITTER_MODE_SELECTED));//
 
 I2C_Cmd(I2C2,ENABLE);
 
-I2C_SendData(I2C2,REG_Address);//·¢ËÍ´æ´¢µ¥ÔªµØÖ·£¬´Ó0¿ªÊ¼
+I2C_SendData(I2C2,REG_Address);//å‘é€å­˜å‚¨å•å…ƒåœ°å€ï¼Œä»0å¼€å§‹
 
 while(!I2C_CheckEvent(I2C2,I2C_EVENT_MASTER_BYTE_TRANSMITTED));
 
-I2C_GenerateSTART(I2C2,ENABLE);//ÆğÊ¼ĞÅºÅ
+I2C_GenerateSTART(I2C2,ENABLE);//èµ·å§‹ä¿¡å·
 
 while(!I2C_CheckEvent(I2C2,I2C_EVENT_MASTER_MODE_SELECT));
 
-I2C_Send7bitAddress(I2C2,SlaveAddress,I2C_Direction_Receiver);//·¢ËÍÉè±¸µØÖ·+¶ÁĞÅºÅ
+I2C_Send7bitAddress(I2C2,SlaveAddress,I2C_Direction_Receiver);//å‘é€è®¾å¤‡åœ°å€+è¯»ä¿¡å·
 
 while(!I2C_CheckEvent(I2C2,I2C_EVENT_MASTER_RECEIVER_MODE_SELECTED));
 
@@ -152,22 +152,22 @@ I2C_GenerateSTOP(I2C2,ENABLE);
 
 while(!(I2C_CheckEvent(I2C2,I2C_EVENT_MASTER_BYTE_RECEIVED)));
 
-REG_data=I2C_ReceiveData(I2C2);//¶Á³ö¼Ä´æÆ÷Êı¾İ
+REG_data=I2C_ReceiveData(I2C2);//è¯»å‡ºå¯„å­˜å™¨æ•°æ®
 
 return REG_data;
 
 }
 
 /*
- * º¯ÊıÃû£ºvoid InitMPU6050(void)
- * ÃèÊö  £º³õÊ¼»¯Mpu6050
- * ÊäÈë  £ºÎŞ
- * Êä³ö  £ºÎŞ
- * µ÷ÓÃ  £ºÍâ²¿µ÷ÓÃ
+ * å‡½æ•°åï¼švoid InitMPU6050(void)
+ * æè¿°  ï¼šåˆå§‹åŒ–Mpu6050
+ * è¾“å…¥  ï¼šæ— 
+ * è¾“å‡º  ï¼šæ— 
+ * è°ƒç”¨  ï¼šå¤–éƒ¨è°ƒç”¨
  */
 void InitMPU6050(void)
 {
-	I2C_ByteWrite(PWR_MGMT_1,0x00);//½â³ıĞİÃß×´Ì¬
+	I2C_ByteWrite(PWR_MGMT_1,0x00);//è§£é™¤ä¼‘çœ çŠ¶æ€
 	I2C_ByteWrite(SMPLRT_DIV,0x07);
 	I2C_ByteWrite(CONFIG,0x06);
 	I2C_ByteWrite(GYRO_CONFIG,0x18);
@@ -177,11 +177,11 @@ void InitMPU6050(void)
 
 
 /*
- * º¯ÊıÃû£ºGetData
- * ÃèÊö  £º»ñµÃ16Î»Êı¾İ
- * ÊäÈë  £ºREG_Address ¼Ä´æÆ÷µØÖ·
- * Êä³ö  £º·µ»Ø¼Ä´æÆ÷Êı¾İ
- * µ÷ÓÃ  £ºÍâ²¿µ÷ÓÃ
+ * å‡½æ•°åï¼šGetData
+ * æè¿°  ï¼šè·å¾—16ä½æ•°æ®
+ * è¾“å…¥  ï¼šREG_Address å¯„å­˜å™¨åœ°å€
+ * è¾“å‡º  ï¼šè¿”å›å¯„å­˜å™¨æ•°æ®
+ * è°ƒç”¨  ï¼šå¤–éƒ¨è°ƒç”¨
  */
 
 int GetData(unsigned char REG_Address)
@@ -189,7 +189,7 @@ int GetData(unsigned char REG_Address)
 	char H,L;
 	H=I2C_ByteRead(REG_Address);
 	L=I2C_ByteRead(REG_Address+1);
-	return (int16_t)((H<<8)+L);   //ºÏ³ÉÊı¾İ
+	return (int16_t)((H<<8)+L);   //åˆæˆæ•°æ®
 }
 
 /******************* (C) COPYRIGHT 2012  *****END OF FILE************/
