@@ -1,4 +1,4 @@
-#ifndef _GYRO_H
+﻿#ifndef _GYRO_H
 #define _GYRO_H
 
 #define TwoG (9.80f * 2.0f) 

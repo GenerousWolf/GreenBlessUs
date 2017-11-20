@@ -3,7 +3,7 @@
 
 #include "stdafx.h"
 
-#define MAX_BUFFER_SIZE 225
+#define MAX_BUFFER_SIZE 16384
 extern uint32_t Rx1Counter;
 extern uint8_t Rx1Buffer[];
 extern uint32_t CCR_Data;
