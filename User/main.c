@@ -31,7 +31,7 @@ int main()
 	{	
 		//DataProc();
 		Delay_10us(10000);
-		//move();
+		MotorControl();
 	}
 }
 
