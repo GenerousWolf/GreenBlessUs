@@ -2,16 +2,40 @@
 
 volatile s16 motorSpeedMeas[3];
 volatile float_t veloVehi[3];
+
 volatile Point SelfPointArr[Max_Storage];
 volatile Point BallPointArr[Max_Storage];
-volatile s16 SelfAngleArr[Max_Storage];				//小车朝向,absolute angle
-volatile s16 TargetAngleArr[Max_Storage];			//球相对小车的角度,absolute angle
-volatile u8 moveState;				//0 for stop, 1 for rotate, 2 for straightfoward
-volatile s8 currentIndex = 0;									//current index in the array
+volatile Point RivalPointArr[Max_Storage];
+
+volatile float courseAngleArr[Max_Storage];				//小车朝向,absolute angle
+volatile float TargetAngleArr[Max_Storage];				//球相对小车的角度,absolute angle
+
+volatile s8 currentIndex = 0;										//current index in the array
+
+volatile float VxbyDecision;
+volatile float VybyDecision;
+volatile float OmegabyDecision;
+
+volatile VelocityWheel ActualSpeed;
+volatile VelocityWheel ExpectSpeed;
+
+volatile PIDstruct V0pid;
+volatile PIDstruct V1pid;
+volatile PIDstruct V2pid;
+
+volatile u8 moveState;													//0 for stop, 1 for rotate, 2 for straightfoward
 volatile s8 rotateStartIndex = 0; 							//index when starting rotate;
 volatile uint8_t countNewPoint = 0;
 
 volatile MatchInfo info;
+
+float correctAngle(float uncorrectedAng)
+{
+	while(uncorrectedAng > PI)
+		uncorrectedAng -= 2*PI;
+	while(uncorrectedAng < -PI)
+		uncorrectedAng += 2*PI;
+}
 
 void Encoder_Init(void)
 {		
@@ -85,17 +109,23 @@ int Encoder_Read(int motornum)
 			count = TIM4->CNT;
 			break;
 		default:
-			count = -314;
+			count = -111;
 			break;
 	}
 	return (s16)count;
 }
 
+
+//the parameter is to be measured
 void motorspeedread(void)
 {
 	motorSpeedMeas[0] = TIM2 -> CNT;
 	motorSpeedMeas[1] = TIM3 -> CNT;
 	motorSpeedMeas[2] = TIM4 -> CNT;
+	
+	V0pid.ActualSpeed = motorSpeedMeas[0] / 11.0;
+	V1pid.ActualSpeed = motorSpeedMeas[1] / 11.0;
+	V2pid.ActualSpeed = motorSpeedMeas[2] / 11.0;
 }
 
 //TIM6 trigger a interupt per 20ms
@@ -158,33 +188,20 @@ void straightfoward()
 }
 
 
-int relaAngle(Point self, Point target){
-	double theta = atan2(target.Y - self.Y, target.X - self.X);
-	return (s16) (100*theta);
+float relaAngle(Point self, Point target){
+	float theta = atan2(target.Y - self.Y, target.X - self.X);
+	return theta;
 }
-
+/*
 int moveAngle(Point current, Point prev){
 	return relaAngle(prev, current);
 }
-
+*/
 void getSelfAngle(void)
 {
-	int angle = (int)(-112 * AngYaw);
-	if(angle > 314) {
-		angle += 314;
-		angle %= 628;
-		angle -= 314;
-	}
-	else
-		if(angle < -314) {
-			angle *= -1;
-			angle += 314;
-			angle %= 628;
-			angle -= 314;
-			angle *= -1;
-		}
-	SelfAngleArr[currentIndex] = angle;
-}	
+	float angle = -1.12 * AngYaw;
+	courseAngleArr[currentIndex] = angle;
+}
 
 void Stop(void)
 {
@@ -194,26 +211,81 @@ void Stop(void)
 	Motor_Speed_Control(0,2);
 }
 
+
+//2.094 is the rad of 120°
+void velocityConvert(void){
+	float theta = courseAngleArr[currentIndex];
+	ExpectSpeed.v0 = VxbyDecision * sin(theta - 2.094) - VybyDecision * cos(theta - 2.094) + OmegabyDecision;
+	ExpectSpeed.v1 = VxbyDecision * sin(theta)				 - VybyDecision * cos(theta)				 + OmegabyDecision;
+	ExpectSpeed.v2 = VxbyDecision * sin(theta + 2.094) - VybyDecision * cos(theta + 2.094) + OmegabyDecision;
+}
+
+
+void PID_init(void)
+{
+	V0pid.Kp=0.2;
+  V0pid.Ki=0.015;
+  V0pid.Kd=0.2;
+	
+	V1pid.Kp=0.2;
+  V1pid.Ki=0.015;
+  V1pid.Kd=0.2;
+	
+	V2pid.Kp=0.2;
+  V2pid.Ki=0.015;
+  V2pid.Kd=0.2;
+}
+
+void PIDcontrol(void)
+{
+	V0pid.ExpectSpeed = ExpectSpeed.v0;
+	V1pid.ExpectSpeed = ExpectSpeed.v1;
+	V2pid.ExpectSpeed = ExpectSpeed.v2;
+	
+	V0pid.err = V0pid.ExpectSpeed - ActualSpeed.v0;
+	V1pid.err = V0pid.ExpectSpeed - ActualSpeed.v1;
+	V2pid.err = V0pid.ExpectSpeed - ActualSpeed.v2;
+	
+	V0pid.integral += V0pid.err;
+	V1pid.integral += V1pid.err;
+	V2pid.integral += V2pid.err;
+	
+	V0pid.SetSpeed = V0pid.Kp*V0pid.err+V0pid.Ki*V0pid.integral+V0pid.Kd*(V0pid.err-V0pid.err_last);
+	V1pid.SetSpeed = V1pid.Kp*V1pid.err+V1pid.Ki*V1pid.integral+V1pid.Kd*(V1pid.err-V1pid.err_last);
+	V2pid.SetSpeed = V2pid.Kp*V2pid.err+V2pid.Ki*V2pid.integral+V2pid.Kd*(V2pid.err-V2pid.err_last);
+	
+	V0pid.err_last = V0pid.err;
+	V1pid.err_last = V1pid.err;
+	V2pid.err_last = V2pid.err;
+}
+
 void Move(void)
 {
-	s16 relativeAngle = TargetAngleArr[currentIndex] - SelfAngleArr[currentIndex];
-	if(relativeAngle > 314) 
+	float max = (V0pid.SetSpeed > V1pid.SetSpeed)? V0pid.SetSpeed:V1pid.SetSpeed;
+	max = (max > V2pid.SetSpeed)?max:V2pid.SetSpeed;
+	
+	if(max > 100.0)
 	{
-		relativeAngle += 314;
-		relativeAngle %= 628;
-		relativeAngle -= 314;
+		V0pid.SetSpeed = V0pid.SetSpeed/max*100;
+		V1pid.SetSpeed = V1pid.SetSpeed/max*100;
+		V2pid.SetSpeed = V2pid.SetSpeed/max*100;
 	}
-	else if(relativeAngle < -314) 
-	{
-		relativeAngle *= -1;
-		relativeAngle += 314;
-		relativeAngle %= 628;
-		relativeAngle -= 314;
-		relativeAngle *= -1;
-	}		
-	Rotate(relativeAngle);
-	printf("RelaAngle = %d\n", relativeAngle);
+	
+	Motor_Speed_Control((s16)V0pid.SetSpeed,0);
+	Motor_Speed_Control((s16)V1pid.SetSpeed,1);
+	Motor_Speed_Control((s16)V2pid.SetSpeed,2);
 }
+
+
+void MotorControl(void)
+{
+	motorspeedread();
+	Encoder_Reset();
+	velocityConvert();
+	PIDcontrol();
+	Move();
+}
+
 
 void addNewPoint(Point selfPoint, Point ballPoint)
 {
