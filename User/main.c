@@ -19,19 +19,18 @@ int main()
 	USART1_Config();
 	M_Init();													//电机正负控制
 	Encoder_Init();
-	I2C_MPU6050_Init();
+	/*I2C_MPU6050_Init();
 	InitMPU6050();
 	puts("Begin Setup");
-	SetupAllPivot();
+	SetupAllPivot();*/
 	TIM6_Init();
 	NVIC_Config();
-	puts("End Setup");
+	//puts("End Setup");
 	
 	while(1)
 	{	
 		//DataProc();
 		Delay_10us(10000);
-		MotorControl();
 	}
 }
 
@@ -69,29 +68,4 @@ void DataProc(void)
 		Motor_Speed_Control(motorSpeeds[1],1);
 		Motor_Speed_Control(motorSpeeds[2],2);
 	}*/
-	if(Rx2Counter == 32)
-    {
-		if(Rx2Buffer[0] >= 0xFC && Rx2Buffer[30] == 0x0D && Rx2Buffer[31] == 0x0A)
-		{
-			info.byteShootOut = Rx2Buffer[0] & 0x02;
-			info.byteShootSide = Rx2Buffer[0] & 0x01;
-			info.byteMatchStatus = (Rx2Buffer[1] & 0xC0) >> 6;
-			info.uTimeByRounds = (((uint16_t)(Rx2Buffer[1] & 0x3F) << 8) | Rx2Buffer[2]);
-			info.ptSelf.X = Rx2Buffer[3];
-			info.ptSelf.Y = (((uint16_t)Rx2Buffer[4] << 8) | Rx2Buffer[5]);
-			info.ptRival.X = Rx2Buffer[6];
-			info.ptRival.Y = (((uint16_t)Rx2Buffer[7] << 8) | Rx2Buffer[8]);
-			info.ptBall.X = Rx2Buffer[9];
-			info.ptBall.Y = (((uint16_t)Rx2Buffer[10] << 8) | Rx2Buffer[11]);
-			info.nHaltRoundsSelf = (((uint16_t)Rx2Buffer[12] << 8) | Rx2Buffer[13]);
-			info.nHaltRoundsRival = (((uint16_t)Rx2Buffer[14] << 8) | Rx2Buffer[15]);
-			info.nEvilSelf = Rx2Buffer[16];
-			info.nEvilRival = Rx2Buffer[17];
-			info.nScoreSelf = Rx2Buffer[18];
-			info.nScoreRival = Rx2Buffer[19];
-		}
-		addNewPoint(info.ptSelf, info.ptBall);
-		Rx2Counter = 0;
-		putchar('R');
-    }
 }

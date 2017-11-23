@@ -46,38 +46,52 @@ typedef struct WHEELVELOCITY
 	float v2;
 }VelocityWheel;
 
+
 typedef struct _PID{
 		float ExpectSpeed;					//期望值
     float SetSpeed;            	//最终的设定值
     float ActualSpeed;        	//测量所得的实际值
     float err;                	//偏差值
     float err_last;            	//上一个偏差值
-    float Kp,Ki,Kd;            	//比例、积分、微分系数
+
     float integral;            	//积分值
 }PIDstruct;
 
 
-extern volatile s16 motorSpeedMeas[3];
-extern volatile float_t veloVehi[3];
+/* motor speed */
+extern volatile VelocityWheel ActualSpeed;
+extern volatile VelocityWheel ExpectSpeed;
+
+/* info given */
 extern volatile Point SelfPointArr[Max_Storage];
 extern volatile Point BallPointArr[Max_Storage];
 extern volatile Point RivalPointArr[Max_Storage];
-extern volatile float courseAngleArr[Max_Storage];				//小车朝向,absolute angle
-extern volatile float TargetAngleArr[Max_Storage];				//球相对小车的角度,absolute angle
-extern volatile s8 currentIndex;										//current index in the array
+extern volatile float courseAngle;				//小车朝向,absolute angle
+extern volatile uint16_t currentIndex;										//current index in the array
+
+/* strategy parameter*/
+extern volatile Point TargetPoint;
+extern volatile float TargetAngle;
 extern volatile float VxbyDecision;
 extern volatile float VybyDecision;
 extern volatile float OmegabyDecision;
-extern volatile VelocityWheel ActualSpeed;
-extern volatile VelocityWheel ExpectSpeed;
+
+/* PID constant */
+extern volatile float Kp;
+extern volatile float Ki;
+extern volatile float Kd;
+extern volatile float umax,umin;						//饱和上下限
+extern volatile float error_max;						//pid 单次最大误差，超过会导致积分项无效
+/* PID struct */
 extern volatile PIDstruct V0pid;
 extern volatile PIDstruct V1pid;
 extern volatile PIDstruct V2pid;
+
 extern volatile u8 moveState;													//0 for stop, 1 for rotate, 2 for straightfoward
 extern volatile s8 rotateStartIndex; 							//index when starting rotate;
 extern volatile uint8_t countNewPoint;
-extern volatile MatchInfo info;
 
+extern volatile MatchInfo info;
 
 //correct course angle to -pi~pi
 float correctAngle(float uncorrectedAng);
@@ -100,10 +114,13 @@ void getSelfAngle(void);
 //convert the overall velocity to the motor speed by a certain matrix
 void velocityConvert(void);
 
-void PID_init(void);
 void PIDcontrol(void);
 void move(void);
 void Stop(void);
 void MotorControl(void);
+float getDistance(Point p1, Point p2);
 void addNewPoint(Point selfPoint, Point ballPoint);
+
+void setStrategy(void);
+void DecideMove(void);
 #endif
