@@ -33,6 +33,7 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
+s16 motorSpeeds[3];
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 
@@ -196,6 +197,39 @@ void USART1_IRQHandler(void)
 		putchar('R');
 		putchar('\n');
     }
+	/*if(Rx1Counter == 24)
+	{
+		uint8_t uPos = 0; 
+		for(int i = 0; i < 3; ++i)
+		{
+			if(Rx1Buffer[uPos] == '%' && Rx1Buffer[uPos + 7] == '$' && Rx1Buffer[uPos + 1] == 'M')
+			{
+				uint8_t uSel = Rx1Buffer[uPos + 2] - '0';
+				int8_t nDir;
+				switch(Rx1Buffer[uPos + 3])
+				{
+					case '+':
+						nDir = 1;
+					break;
+					case '-':
+						nDir = -1;
+					break;
+					case '0':
+						nDir = 0;
+					break;
+					default:
+						break;
+				}
+				motorSpeeds[uSel] = nDir * ((Rx1Buffer[uPos + 4] - '0') * 100 + (Rx1Buffer[uPos + 5] - '0') * 10 + (Rx1Buffer[uPos + 6] - '0'));
+				uPos += 8;
+			}
+		}
+		Rx1Counter = 0;
+		Motor_Speed_Control(motorSpeeds[0],0);
+		Motor_Speed_Control(motorSpeeds[1],1);
+		Motor_Speed_Control(motorSpeeds[2],2);
+		
+	}*/
 }
 
 /**
@@ -209,13 +243,10 @@ void TIM6_IRQHandler(void)
 	if (TIM_GetITStatus(TIM6, TIM_IT_Update) != RESET)
     {
 		TIM_ClearITPendingBit(TIM6, TIM_IT_Update);
-		motorspeedread();			//读取编码器数据
-		//GetAllFromMPU();			//惯导积分
-		//getSelfAngle();				//获取当前自身朝向
-		Encoder_Reset();			//编码器清零 
-		//courseAngle += 0.1f;
-		//if(courseAngle > 3.14f) courseAngle -= 3.14f;
+		GetAllFromMPU();			//惯导积分
+		courseAngle = AngYaw;
 		MotorControl();
+		//printf("cA = %f\n", courseAngle);
     }
 }
 

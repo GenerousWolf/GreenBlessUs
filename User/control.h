@@ -109,8 +109,6 @@ void Rotate(s16 angle);
 float relaAngle(Point self, Point target);
 //int moveAngle(Point current, Point prev);
 
-void getSelfAngle(void);
-
 //convert the overall velocity to the motor speed by a certain matrix
 void velocityConvert(void);
 

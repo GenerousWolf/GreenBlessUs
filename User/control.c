@@ -8,7 +8,7 @@ volatile VelocityWheel ExpectSpeed;
 volatile Point SelfPointArr[Max_Storage];
 volatile Point BallPointArr[Max_Storage];
 volatile Point RivalPointArr[Max_Storage];
-volatile float courseAngle = 0.450f;				//小车朝向,absolute angle
+volatile float courseAngle = 0.450f;						//小车朝向,absolute angle
 volatile uint16_t currentIndex = 0;							//current index in the array
 
 /* strategy parameter*/
@@ -202,12 +202,6 @@ int moveAngle(Point current, Point prev){
 	return relaAngle(prev, current);
 }
 */
-void getSelfAngle(void)
-{
-	float angle = -1.12 * AngYaw;
-	courseAngle = angle;
-}
-
 void Stop(void)
 {
 	moveState = 0;
@@ -277,7 +271,7 @@ void Move(void)
 		V1pid.SetSpeed = V1pid.SetSpeed/max*100;
 		V2pid.SetSpeed = V2pid.SetSpeed/max*100;
 	}
-	
+	//printf("m0 = %d, m1 = %d, m2 = %d\n", (s16)V0pid.SetSpeed, (s16)V1pid.SetSpeed, (s16)V2pid.SetSpeed);
 	Motor_Speed_Control((s16)V0pid.SetSpeed,0);
 	Motor_Speed_Control((s16)V1pid.SetSpeed,1);
 	Motor_Speed_Control((s16)V2pid.SetSpeed,2);
@@ -316,20 +310,40 @@ float getDistance(Point p1, Point p2)
 
 void setStrategy(void)
 {	
-	//貌似不适用于初赛
 	double selfDistance = getDistance(SelfPointArr[currentIndex], BallPointArr[currentIndex]);
 	double rivalDistance = getDistance(RivalPointArr[currentIndex], BallPointArr[currentIndex]);
 	TargetPoint.X = BallPointArr[currentIndex].X;
 	TargetPoint.Y = BallPointArr[currentIndex].Y;
-	if(selfDistance > rivalDistance){						//防守时位于球和本方球门之间；进攻时需要考虑球门的位置，使球门，球，车在一条直线，angle也需要更改
+	if( 0 /*selfDistance > rivalDistance*/){						//防守时位于球和本方球门之间；进攻时需要考虑球门的位置，使球门，球，车在一条直线，angle也需要更改
 		TargetPoint.Y -= 12;
 		if(TargetPoint.Y < 12)
 			TargetPoint.Y = 12;
+		TargetAngle = relaAngle(SelfPointArr[currentIndex], TargetPoint) - courseAngle;
 	}
-	else{
+	else if(selfDistance > 15){
 		TargetPoint = BallPointArr[currentIndex];
+		TargetAngle = relaAngle(SelfPointArr[currentIndex], TargetPoint) - courseAngle;
 	}
-	TargetAngle = relaAngle(SelfPointArr[currentIndex], TargetPoint) - courseAngle;
+	else {//进入控球模式
+		Point goalPoint;//球门坐标（105,297）
+		goalPoint.X = 105;
+		goalPoint.Y = 297;
+		int dxBall2Goal = 105 - BallPointArr[currentIndex].X;
+		int dyBall2Goal = 297 - BallPointArr[currentIndex].Y;
+		double distanceBall2Goal = sqrt((double)(dxBall2Goal*dxBall2Goal + dyBall2Goal*dyBall2Goal));
+		float angleBall2Goal = relaAngle(BallPointArr[currentIndex], goalPoint);
+		TargetAngle = angleBall2Goal- courseAngle;
+		if(fabs(angleBall2Goal - courseAngle) > 0.25){//调整姿态
+			int dxBall2Goal = 105 - BallPointArr[currentIndex].X;
+			int dyBall2Goal = 297 - BallPointArr[currentIndex].Y;
+			double distanceBall2Goal = sqrt((double)(dxBall2Goal*dxBall2Goal + dyBall2Goal*dyBall2Goal));
+			TargetPoint.X = BallPointArr[currentIndex].X - selfDistance * dxBall2Goal / distanceBall2Goal;
+			TargetPoint.X = BallPointArr[currentIndex].Y - selfDistance * dyBall2Goal / distanceBall2Goal;
+		}
+		else{//推球前进，准备射门
+			TargetPoint = goalPoint;
+		}
+	}
 }
 
 void DecideMove(void)
@@ -337,21 +351,21 @@ void DecideMove(void)
 	int dx = BallPointArr[currentIndex].X - SelfPointArr[currentIndex].X;
 	int dy = BallPointArr[currentIndex].Y - SelfPointArr[currentIndex].Y;
 	int temp = sqrt((double)(dx*dx+dy*dy));
-	VxbyDecision = 100 * dx / temp;
-	VybyDecision = 100 * dy / temp;
 	int kOmega = 1;
-	if(fabs(TargetAngle) > 1.5){
+	if(TargetAngle < 0)
+		kOmega = -1;
+	VxbyDecision = 200 * dx / temp;
+	VybyDecision = 200 * dy / temp;
+	if(fabs(TargetAngle) > 1.5){//大于90度，先旋转
 		VxbyDecision = 0;
 		VybyDecision = 0;
 	}
-	else if(TargetAngle < 0)
-		kOmega = -1;
-	if(fabs(TargetAngle) > 0.5){//大概30度
-		OmegabyDecision = 100 * kOmega;
+	else if(fabs(TargetAngle) > 0.5){//大概30度
+		OmegabyDecision = 200 * kOmega;
 	}
 	else if(fabs(TargetAngle) > 0.25){//大概15度
-		OmegabyDecision = 20 * kOmega;
+		OmegabyDecision = 80 * kOmega;
 	}
-	else
+	else//小于15度
 		OmegabyDecision = 0;
 }
