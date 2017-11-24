@@ -4,8 +4,9 @@
 // Definitions
 
 #define Kp 0.005f                   	// proportional gain governs rate of convergence to accelerometer/magnetometer
-#define Ki 0.000001f                		// integral gain governs rate of convergence of gyroscope biases
-#define halfT 0.01f                	// half the sample period
+#define Ki 0.0000f                		// integral gain governs rate of convergence of gyroscope biases
+#define halfT 0.025f                	// half the sample period
+#define T 0.05f
 
 //---------------------------------------------------------------------------------------------------
 // Variable definitions
@@ -41,9 +42,9 @@ void GetAngles(float ax, float ay, float az ,float gx, float gy, float gz)
 	ez = (ax*vy - ay*vx);
 
 	// integral error scaled integral gain
-	exInt+=ex*Ki*0.001;
-	eyInt+=ey*Ki*0.001;
-	ezInt+=ez*Ki*0.001;
+	exInt+=ex*Ki*T;
+	eyInt+=ey*Ki*T;
+	ezInt+=ez*Ki*T;
 
 	// adjusted gyroscope measurements
 	gx+=Kp*ex + exInt;
@@ -63,7 +64,7 @@ void GetAngles(float ax, float ay, float az ,float gx, float gy, float gz)
 	q2/=norm;
 	q3/=norm;
 	
-	AngYaw = atan2(2.0*(q1*q2+q0*q3),q0*q0+q1*q1-q2*q2-q3*q3);
+	AngYaw = - atan2(2.0*(q1*q2+q0*q3),q0*q0+q1*q1-q2*q2-q3*q3) / 1.73;
 }
 
 void GetAllFromMPU(void)
@@ -79,7 +80,7 @@ void GetAllFromMPU(void)
 	wZ = wZ / 180.0f * 3.1415926535f;
 	//printf("aX = %f,aY = %f,aZ = %f,wX = %f,wY = %f, wZ = %f\n",aX,aY,aZ,wX,wY,wZ);
 	GetAngles(aX,aY,aZ,wX,wY,wZ);
-	printf("Angle:%f\n", AngYaw);
+	//printf("Angle:%f\n", AngYaw);
 }
 
 void SetupAllPivot(void)
