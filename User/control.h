@@ -21,22 +21,24 @@ typedef struct tagPOINT
 enum SHOOTOUT {NO = 0x0, YES = 0x1};
 enum MATCHSTATUS {NOTBEGIN = 0x0, RUNNING = 0x1, PAUSE = 0x2, OVER = 0x3};
 enum SIDE {SIDE_SELF = 0x1, SIDE_RIVAL = 0x0};
-
+enum STATE_SELF {ATK = 0x1, DEF = 0x0};
+	
 typedef struct tagMATCHINFO
 {
-	uint16_t uTimeByRounds;
-	uint16_t nHaltRoundsSelf;
-	uint16_t nHaltRoundsRival;
-	uint8_t byteShootOut;
-	uint8_t byteShootSide;
-	uint8_t byteMatchStatus;
-	uint8_t nEvilSelf;
-	uint8_t nEvilRival;
-	uint8_t nScoreSelf;
-	uint8_t nScoreRival;
-	Point ptBall;
-	Point ptSelf;
-	Point ptRival;
+	volatile uint16_t uTimeByRounds;
+	volatile uint16_t nHaltRoundsSelf;
+	volatile uint16_t nHaltRoundsRival;
+	volatile uint8_t nSelfState;
+	volatile uint8_t byteShootOut;
+	volatile uint8_t byteShootSide;
+	volatile uint8_t byteMatchStatus;
+	volatile uint8_t nEvilSelf;
+	volatile uint8_t nEvilRival;
+	volatile uint8_t nScoreSelf;
+	volatile uint8_t nScoreRival;
+	volatile Point ptBall;
+	volatile Point ptSelf;
+	volatile Point ptRival;
 }MatchInfo;
 
 typedef struct WHEELVELOCITY
@@ -68,6 +70,7 @@ extern volatile Point BallPointArr[Max_Storage];
 extern volatile Point RivalPointArr[Max_Storage];
 extern volatile float courseAngle;				//小车朝向,absolute angle
 extern volatile uint16_t currentIndex;										//current index in the array
+extern volatile Point GatePoint;
 
 /* strategy parameter*/
 extern volatile Point TargetPoint;
@@ -103,8 +106,6 @@ void motorspeedread(void);
 
 void TIM6_Init(void);
 
-void RotateStop(int16_t rotateAngle);
-void Rotate(s16 angle);
 
 float relaAngle(Point self, Point target);
 //int moveAngle(Point current, Point prev);
