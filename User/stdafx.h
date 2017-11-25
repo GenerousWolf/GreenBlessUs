@@ -1,4 +1,4 @@
-﻿#ifndef __STDAFX_H
+#ifndef __STDAFX_H
 #define __STDAFX_H
 
 // All Dependencies
@@ -12,17 +12,17 @@
 /**Standard C Libraries**/
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <math.h>
 
 /**Users' Headers**/
-#include "gyro.h"
 #include "control.h"
 #include "usart.h"
 #include "nvic.h"
+#include "JY61.h"
 
 /**Private Headers**/
 #include "motor.h"
-#include "mpu6050.h"
 #include "systick.h"
 
 #endif

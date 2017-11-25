@@ -171,32 +171,7 @@ void USART1_IRQHandler(void)
 			Rx2Buffer[Rx2Counter++] = ch;
 		/* Try not to use printf() or scanf(), for their lacking of efficiency. */
 	}
-	if(Rx2Counter == 32)
-    {
-		if(Rx2Buffer[0] >= 0xFC && Rx2Buffer[30] == 0x0D && Rx2Buffer[31] == 0x0A)
-		{
-			info.byteShootOut = Rx2Buffer[0] & 0x02;
-			info.byteShootSide = Rx2Buffer[0] & 0x01;
-			info.byteMatchStatus = (Rx2Buffer[1] & 0xC0) >> 6;
-			info.uTimeByRounds = (((uint16_t)(Rx2Buffer[1] & 0x3F) << 8) | Rx2Buffer[2]);
-			info.ptSelf.X = Rx2Buffer[3];
-			info.ptSelf.Y = (((uint16_t)Rx2Buffer[4] << 8) | Rx2Buffer[5]);
-			info.ptRival.X = Rx2Buffer[6];
-			info.ptRival.Y = (((uint16_t)Rx2Buffer[7] << 8) | Rx2Buffer[8]);
-			info.ptBall.X = Rx2Buffer[9];
-			info.ptBall.Y = (((uint16_t)Rx2Buffer[10] << 8) | Rx2Buffer[11]);
-			info.nHaltRoundsSelf = (((uint16_t)Rx2Buffer[12] << 8) | Rx2Buffer[13]);
-			info.nHaltRoundsRival = (((uint16_t)Rx2Buffer[14] << 8) | Rx2Buffer[15]);
-			info.nEvilSelf = Rx2Buffer[16];
-			info.nEvilRival = Rx2Buffer[17];
-			info.nScoreSelf = Rx2Buffer[18];
-			info.nScoreRival = Rx2Buffer[19];
-		}
-		addNewPoint(info.ptSelf, info.ptBall);
-		Rx2Counter = 0;
-		putchar('R');
-		putchar('\n');
-    }
+	
 	/*if(Rx1Counter == 24)
 	{
 		uint8_t uPos = 0; 
@@ -243,33 +218,78 @@ void TIM6_IRQHandler(void)
 	if (TIM_GetITStatus(TIM6, TIM_IT_Update) != RESET)
     {
 		TIM_ClearITPendingBit(TIM6, TIM_IT_Update);
-		GetAllFromMPU();			//惯导积分
-		courseAngle = AngYaw;
+		courseAngle = - ((float)stcAngle.Angle[2]) / MAX_RANGE * PI;
+		//printf("cA = %.3f, tA = %.3f\n", courseAngle, TargetAngle);
 		MotorControl();
-		//printf("cA = %f\n", courseAngle);
-    }
+	}
 }
 
 /**
-  * @brief  This function handles USART4 interrupt request.
+  * @brief  This function handles UART4 interrupt request.
   * @param  None
   * @retval None
   */ 
 
-void USART4_IRQHandler(void)
+void UART4_IRQHandler(void)
 {
 	/* When the serial recieve a byte, do the work below. */
-	if(USART_GetITStatus(USART1, USART_IT_RXNE) != RESET)
+	if(USART_GetITStatus(UART4, USART_IT_RXNE) != RESET)
 	{
 		/* Clear the flag of recieve buffer not empty. */
-		USART_ClearITPendingBit(USART1,USART_IT_RXNE);
+		USART_ClearITPendingBit(UART4,USART_IT_RXNE);
 		/* Get the byte. */
-		uint8_t ch = USART_ReceiveData(USART1); 
+		uint8_t ch = USART_ReceiveData(UART4); 
 		/* Do something with this byte. */
 		if(Rx2Counter != MAX_BUFFER_SIZE)
 			Rx2Buffer[Rx2Counter++] = ch;
 		/* Try not to use printf() or scanf(), for their lacking of efficiency. */
 	}
+	if(Rx2Counter == 32)
+    {
+		if(Rx2Buffer[0] >= 0xFC && Rx2Buffer[30] == 0x0D && Rx2Buffer[31] == 0x0A && (int16_t)Rx2Buffer[7] > 0)
+		{
+			info.byteShootOut = Rx2Buffer[0] & 0x02;
+			info.nSelfState = Rx2Buffer[0] & 0x01;
+			info.byteShootSide = Rx2Buffer[0] & 0x01;
+			info.byteMatchStatus = (Rx2Buffer[1] & 0xC0) >> 6;
+			info.uTimeByRounds = (((uint16_t)(Rx2Buffer[1] & 0x3F) << 8) | Rx2Buffer[2]);
+			info.ptSelf.X = Rx2Buffer[3];
+			info.ptSelf.Y = (((uint16_t)Rx2Buffer[4] << 8) | Rx2Buffer[5]);
+			info.ptRival.X = Rx2Buffer[6];
+			info.ptRival.Y = (((uint16_t)Rx2Buffer[7] << 8) | Rx2Buffer[8]);
+			info.ptBall.X = Rx2Buffer[9];
+			info.ptBall.Y = (((uint16_t)Rx2Buffer[10] << 8) | Rx2Buffer[11]);
+			info.nHaltRoundsSelf = (((uint16_t)Rx2Buffer[12] << 8) | Rx2Buffer[13]);
+			info.nHaltRoundsRival = (((uint16_t)Rx2Buffer[14] << 8) | Rx2Buffer[15]);
+			info.nEvilSelf = Rx2Buffer[16];
+			info.nEvilRival = Rx2Buffer[17];
+			info.nScoreSelf = Rx2Buffer[18];
+			info.nScoreRival = Rx2Buffer[19];
+			addNewPoint(info.ptSelf, info.ptBall);
+		}
+		Rx2Counter = 0;
+		//printf("nSS = %d, nSelfX = %d, nSelfY = %d, nBallX = %d, nBallY = %d\n",info.nSelfState, info.ptSelf.X, info.ptSelf.Y, info.ptBall.X, info.ptBall.Y);
+    }
 }
 
+/**
+  * @brief  This function handles USART3 interrupt request.
+  * @param  None
+  * @retval None
+  */ 
+
+void USART3_IRQHandler(void)
+{
+	/* When the serial recieve a byte, do the work below. */
+	if(USART_GetITStatus(USART3, USART_IT_RXNE) != RESET)
+	{
+		/* Clear the flag of recieve buffer not empty. */
+		USART_ClearITPendingBit(USART3,USART_IT_RXNE);
+		/* Get the byte. */
+		uint8_t ch = USART_ReceiveData(USART3); 
+		/* Do something with this byte. */
+		ProcessData(ch);
+		/* Try not to use printf() or scanf(), for their lacking of efficiency. */
+	}
+}
 /******************* (C) COPYRIGHT 2011 STMicroelectronics *****END OF FILE****/
