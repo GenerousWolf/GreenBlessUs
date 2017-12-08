@@ -20,9 +20,12 @@
 #include "usart.h"
 #include "nvic.h"
 #include "JY61.h"
+#include "detect.h"
 
 /**Private Headers**/
 #include "motor.h"
 #include "systick.h"
+
+extern volatile int Visible;
 
 #endif

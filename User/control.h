@@ -68,13 +68,14 @@ extern volatile VelocityWheel ExpectSpeed;
 extern volatile Point SelfPointArr[Max_Storage];
 extern volatile Point BallPointArr[Max_Storage];
 extern volatile Point RivalPointArr[Max_Storage];
-extern volatile float courseAngle;				//小车朝向,absolute angle
+extern volatile double courseAngle;				//小车朝向,absolute angle
 extern volatile uint16_t currentIndex;										//current index in the array
-extern volatile Point GatePoint;
+extern const int GateX;
+extern const int GateY;
 
 /* strategy parameter*/
 extern volatile Point TargetPoint;
-extern volatile float TargetAngle;
+extern volatile double TargetAngle;
 extern volatile float VxbyDecision;
 extern volatile float VybyDecision;
 extern volatile float OmegabyDecision;
@@ -97,7 +98,7 @@ extern volatile uint8_t countNewPoint;
 extern volatile MatchInfo info;
 
 //correct course angle to -pi~pi
-float correctAngle(float uncorrectedAng);
+void correctAngle(volatile double *uncorrectedAng);
 
 void Encoder_Init(void);
 void Encoder_Reset(void);
@@ -106,9 +107,9 @@ void motorspeedread(void);
 
 void TIM6_Init(void);
 
+double relaAngle(Point self, Point target);
 
-float relaAngle(Point self, Point target);
-//int moveAngle(Point current, Point prev);
+int IsBoundary(void);
 
 //convert the overall velocity to the motor speed by a certain matrix
 void velocityConvert(void);
