@@ -11,13 +11,14 @@ volatile VelocityWheel ExpectSpeed;
 volatile Point SelfPointArr[Max_Storage];
 volatile Point BallPointArr[Max_Storage];
 volatile Point RivalPointArr[Max_Storage];
-volatile Point GatePoint;
-volatile float courseAngle = 0.0f;						//小车朝向,absolute angle
+const int GateX = 105;
+const int GateY = 0;
+volatile double courseAngle = 0.0;						//小车朝向,absolute angle
 volatile uint16_t currentIndex = 0;							//current index in the array
 
 /* strategy parameter*/
 volatile Point TargetPoint;
-volatile float TargetAngle;
+volatile double TargetAngle;
 volatile float VxbyDecision;
 volatile float VybyDecision;
 volatile float OmegabyDecision;
@@ -39,13 +40,12 @@ volatile uint8_t countNewPoint = 0;
 
 volatile MatchInfo info;
 
-float correctAngle(float uncorrectedAng)
+void correctAngle(volatile double *uncorrectedAng)
 {
-	while(uncorrectedAng > PI)
-		uncorrectedAng -= 2*PI;
-	while(uncorrectedAng < -PI)
-		uncorrectedAng += 2*PI;
-	return uncorrectedAng;
+	while(*uncorrectedAng > PI)
+		*uncorrectedAng -= 2*PI;
+	while(*uncorrectedAng < -PI)
+		*uncorrectedAng += 2*PI;
 }
 
 void Encoder_Init(void)
@@ -152,17 +152,13 @@ void TIM6_Init(void)
 
 
 
-float relaAngle(Point self, Point target)
+double relaAngle(Point self, Point target)
 {
 	volatile int dy = target.Y - self.Y, dx = target.X - self.X;
-	volatile float theta = ((dy == 0) && (dx == 0)) ? 0.0f :atan2(dy, dx);
+	volatile float theta = (dy | dx) ? atan2(dy, dx) : 0.0f;
 	return theta;
 }
-/*
-int moveAngle(Point current, Point prev){
-	return relaAngle(prev, current);
-}
-*/
+
 void Stop(void)
 {
 	moveState = 0;
@@ -230,6 +226,12 @@ void PIDcontrol(void)
 		V2pid.integral += V2pid.err;
 	V2pid.SetSpeed = ExpectSpeed.v2+Kp*V2pid.err+flag * Ki*V2pid.integral+Kd*(V2pid.err-V2pid.err_last);
 	V2pid.err_last = V2pid.err;
+	
+	/*
+	V0pid.SetSpeed = ExpectSpeed.v0;
+	V1pid.SetSpeed = ExpectSpeed.v1;
+	V2pid.SetSpeed = ExpectSpeed.v2;
+	*/
 }
 
 void Move(void)
@@ -266,53 +268,135 @@ void addNewPoint(Point selfPoint, Point ballPoint)
 /******************************************************/
 float getDistance(Point p1, Point p2)
 {
-	double dif = (p1.X-p2.X)*(p1.X-p2.X)+(p1.Y-p2.Y)*(p1.Y-p2.Y);
-	return sqrt(dif);
+	double diff = (p1.X-p2.X)*(p1.X-p2.X)+(p1.Y-p2.Y)*(p1.Y-p2.Y);
+	return sqrt(diff);
 }
 
 void setStrategy(void)
 {	
-	double selfDistance = getDistance(SelfPointArr[currentIndex], BallPointArr[currentIndex]);
-	double rivalDistance = getDistance(RivalPointArr[currentIndex], BallPointArr[currentIndex]);
-	TargetPoint.X = BallPointArr[currentIndex].X;
-	TargetPoint.Y = BallPointArr[currentIndex].Y;
-	if( info.nSelfState == DEF /*selfDistance > rivalDistance*/){						//防守时位于球和本方球门之间；进攻时需要考虑球门的位置，使球门，球，车在一条直线，angle也需要更改
-		TargetPoint.Y -= 12;
-		if(TargetPoint.Y < 12)
-			TargetPoint.Y = 12;
-		TargetAngle = relaAngle(SelfPointArr[currentIndex], TargetPoint) - courseAngle;
-		putchar('D');
-		putchar('\n');
-	}
-	else if(selfDistance > 15){
-		TargetPoint.X = BallPointArr[currentIndex].X;
-		TargetPoint.Y = BallPointArr[currentIndex].Y;
-		TargetAngle = relaAngle(SelfPointArr[currentIndex], TargetPoint) - courseAngle;
-		putchar('S');
-		putchar('\n');
-	}
-	else {//进入控球模式
-		putchar('C');
-		putchar('\n');
-		if(BallPointArr[currentIndex].X == 0 && BallPointArr[currentIndex].Y == 0)
-			return;
-		int dxBall2Goal = GatePoint.X - BallPointArr[currentIndex].X;
-		int dyBall2Goal = GatePoint.Y - BallPointArr[currentIndex].Y;
-		double distanceBall2Goal = sqrt((double)(dxBall2Goal*dxBall2Goal + dyBall2Goal*dyBall2Goal));
-		float angleBall2Goal = relaAngle(BallPointArr[currentIndex], GatePoint);
-		TargetAngle = angleBall2Goal- courseAngle;
-		if(fabs(angleBall2Goal - courseAngle) > 0.15){//调整姿态
-			int dxBall2Goal = GatePoint.X - BallPointArr[currentIndex].X;
-			int dyBall2Goal = GatePoint.Y - BallPointArr[currentIndex].Y;
-			double distanceBall2Goal = sqrt((double)(dxBall2Goal*dxBall2Goal + dyBall2Goal*dyBall2Goal));
-			TargetPoint.X = BallPointArr[currentIndex].X - selfDistance * dxBall2Goal / distanceBall2Goal;
-			TargetPoint.X = BallPointArr[currentIndex].Y - selfDistance * dyBall2Goal / distanceBall2Goal;
+	double dDisSelfBall = getDistance(info.ptSelf, info.ptBall);
+	double dDisRivalBall = getDistance(info.ptRival, info.ptBall);
+	double dDisSelfRival = getDistance(info.ptSelf, info.ptRival);
+	double dAngSelf = courseAngle;
+	double dAngBallSelf = relaAngle(info.ptSelf, info.ptBall);
+	double dAngRivalSelf = relaAngle(info.ptSelf, info.ptRival);
+	
+	if(info.nSelfState == ATK)
+	{
+		if(IsBoundary())
+		{	
+			TargetPoint.X = 105;
+			TargetPoint.Y = 148;
+			TargetAngle = relaAngle(info.ptSelf, TargetPoint) - dAngSelf;
+			correctAngle(&TargetAngle);
+			putchar('b');
+			putchar('\n');
 		}
-		else{//推球前进，准备射门
-			TargetPoint = GatePoint;
+		//Attack
+		else if(!isBallDetected())
+		{
+			//Seek Ball
+			TargetPoint = info.ptBall;
+			TargetAngle = relaAngle(info.ptSelf, TargetPoint) - dAngSelf;
+			correctAngle(&TargetAngle);
+			putchar('s');
+			putchar('\n');
+		}
+		else
+		{
+			//How to get close to gate
+			if( info.ptSelf.Y < 30 &&
+				info.ptSelf.X < 145 &&
+				info.ptSelf.X > 65 )
+			{
+				//Shoot
+				TargetPoint.X = 105;
+				TargetPoint.Y = 5;
+				TargetAngle = relaAngle(info.ptSelf, TargetPoint) - dAngSelf;
+				correctAngle(&TargetAngle);
+				putchar('a');
+				putchar('\n');
+			}
+			else
+			{
+				if( (info.ptSelf.Y < info.ptRival.Y  && 
+					info.ptSelf.Y >= 55 ) ||
+					dDisSelfRival > 25 )
+				{
+					//Ready to Shoot
+					TargetPoint.X = 105;
+					TargetPoint.Y = 25;
+					TargetAngle = relaAngle(info.ptSelf, TargetPoint) - dAngSelf;
+					correctAngle(&TargetAngle);
+					putchar('p');
+					putchar('\n');
+				}
+				else if (dAngRivalSelf < 0.0f && dAngRivalSelf > - PI / 2)
+				{
+					TargetPoint.X = info.ptRival.X - 25 * sin(fabs(dAngRivalSelf));
+					TargetPoint.Y = info.ptRival.Y - 25 * cos(fabs(dAngRivalSelf));
+					TargetAngle = relaAngle(info.ptSelf, TargetPoint) - dAngSelf;
+					correctAngle(&TargetAngle);
+					putchar('l');
+					putchar('\n');
+				}
+				else
+				{
+					TargetPoint.X = info.ptRival.X + 25 * sin(fabs(dAngRivalSelf));
+					TargetPoint.Y = info.ptRival.Y + 25 * cos(fabs(dAngRivalSelf));
+					TargetAngle = relaAngle(info.ptSelf, TargetPoint) - dAngSelf;
+					correctAngle(&TargetAngle);
+					putchar('r');
+					putchar('\n');
+				}
+			}
 		}
 	}
-	TargetAngle = correctAngle(TargetAngle);
+	else
+	{
+		//Defend
+		if(Visible)
+		{
+			//Ball Is Visible
+			if(dDisRivalBall < 15)
+			{
+				TargetPoint = info.ptRival;
+				TargetAngle = relaAngle(info.ptSelf, TargetPoint) - dAngSelf;
+				correctAngle(&TargetAngle);
+				putchar('c');
+				putchar('\n');
+			}
+			else
+			{
+				if(isBallDetected())
+				{
+					TargetPoint.X = 150;
+					TargetPoint.Y = 200;
+					TargetAngle = relaAngle(info.ptSelf, TargetPoint) - dAngSelf;
+					correctAngle(&TargetAngle);
+					putchar('e');
+					putchar('\n');
+				}
+				else
+				{
+					TargetPoint = info.ptBall;
+					TargetAngle = relaAngle(info.ptSelf, TargetPoint) - dAngSelf;
+					correctAngle(&TargetAngle);
+					putchar('s');
+					putchar('\n');
+				}
+			}
+		}
+		else
+		{
+			TargetPoint.X = (info.ptRival.X + 105) / 2;
+			TargetPoint.Y = (info.ptRival.Y + 5) / 2;
+			TargetAngle = relaAngle(info.ptSelf, TargetPoint) - dAngSelf;
+			correctAngle(&TargetAngle);
+			putchar('h');
+			putchar('\n');
+		}
+	}
 }
 
 void DecideMove(void)
@@ -323,30 +407,59 @@ void DecideMove(void)
 	int kOmega = 1;
 	if(TargetAngle < 0)
 		kOmega = -1;
-	VxbyDecision = 200 * dx / temp;
-	VybyDecision = 200 * dy / temp;
+	if(temp > 40.0){
+		VxbyDecision = 150 * dx / temp;
+		VybyDecision = 150 * dy / temp;
+	}
+	else{
+		VxbyDecision = 3 * (temp + 10) * dx / temp;
+		VybyDecision = 3 * (temp + 10) * dy / temp;
+	}
 	if(fabs(TargetAngle) > 2.5){//大于度，先旋转
 		VxbyDecision = 0;
 		VybyDecision = 0;
-		OmegabyDecision = 80;
+		OmegabyDecision = 40;
 	}
-	else if(fabs(TargetAngle) > 1.0){//大于60度，先旋转
+	else if(fabs(TargetAngle) > 1.5f){//大于90度，先旋转
 		VxbyDecision = 0;
 		VybyDecision = 0;
-		OmegabyDecision = 60 * kOmega;
-		putchar('6');
-		putchar('\n');
-	}
-	else if(fabs(TargetAngle) > 0.5){//大概30度
-		OmegabyDecision = 60 * kOmega;
-		putchar('3');
-		putchar('\n');
-	}
-	else if(fabs(TargetAngle) > 0.15){//大概8度
 		OmegabyDecision = 40 * kOmega;
-		putchar('8');
-		putchar('\n');
+	}
+	else if(fabs(TargetAngle) > 0.5236f){//大概30度
+		OmegabyDecision = 30 * kOmega;
+	}
+	else if(fabs(TargetAngle) > 0.1396f){//大概8度
+		OmegabyDecision = 10 * kOmega;
 	}
 	else//小于8度
 		OmegabyDecision = 0;
+	if(info.nSelfState == DEF){
+		if(fabs(VxbyDecision) > 30 ||
+			fabs(VybyDecision) > 30){
+				float max = (VxbyDecision > VybyDecision)?VxbyDecision:VybyDecision;
+				VxbyDecision *= 30/max;
+				VybyDecision *= 30/max;
+		}
+	}
+	
+}
+
+int IsBoundary(void)
+{
+	int nRes = 0;
+	if(	info.ptSelf.X >= 195 || 
+		info.ptSelf.X <= 15  ||
+		info.ptSelf.Y >= 282 )
+	{
+		if(info.ptSelf.X > 65 && info.ptSelf.X < 145)
+		{
+			nRes = 0;
+		}
+		else
+		{
+			nRes = 1;
+		}
+	}
+	return nRes;
+		
 }

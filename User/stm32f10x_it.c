@@ -33,7 +33,7 @@
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
-s16 motorSpeeds[3];
+volatile int Visible = 1;
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
 
@@ -220,7 +220,15 @@ void TIM6_IRQHandler(void)
 		TIM_ClearITPendingBit(TIM6, TIM_IT_Update);
 		courseAngle = - ((float)stcAngle.Angle[2]) / MAX_RANGE * PI;
 		//printf("cA = %.3f, tA = %.3f\n", courseAngle, TargetAngle);
-		MotorControl();
+		
+		if(info.nHaltRoundsSelf > 0 || info.byteMatchStatus != RUNNING)
+		{
+			Stop();	
+		}
+		else
+		{
+			MotorControl();
+		}
 	}
 }
 
@@ -246,7 +254,7 @@ void UART4_IRQHandler(void)
 	}
 	if(Rx2Counter == 32)
     {
-		if(Rx2Buffer[0] >= 0xFC && Rx2Buffer[30] == 0x0D && Rx2Buffer[31] == 0x0A && (int16_t)Rx2Buffer[7] > 0)
+		if(Rx2Buffer[0] >= 0xFC && Rx2Buffer[30] == 0x0D && Rx2Buffer[31] == 0x0A)
 		{
 			info.byteShootOut = Rx2Buffer[0] & 0x02;
 			info.nSelfState = Rx2Buffer[0] & 0x01;
@@ -258,6 +266,7 @@ void UART4_IRQHandler(void)
 			info.ptRival.X = Rx2Buffer[6];
 			info.ptRival.Y = (((uint16_t)Rx2Buffer[7] << 8) | Rx2Buffer[8]);
 			info.ptBall.X = Rx2Buffer[9];
+			Visible = (int8_t)Rx2Buffer[10] >= 0;
 			info.ptBall.Y = (((uint16_t)Rx2Buffer[10] << 8) | Rx2Buffer[11]);
 			info.nHaltRoundsSelf = (((uint16_t)Rx2Buffer[12] << 8) | Rx2Buffer[13]);
 			info.nHaltRoundsRival = (((uint16_t)Rx2Buffer[14] << 8) | Rx2Buffer[15]);

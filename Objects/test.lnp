@@ -7,6 +7,7 @@
 ".\objects\motor.o"
 ".\objects\nvic.o"
 ".\objects\jy61.o"
+".\objects\detect.o"
 ".\objects\misc.o"
 ".\objects\stm32f10x_gpio.o"
 ".\objects\stm32f10x_i2c.o"

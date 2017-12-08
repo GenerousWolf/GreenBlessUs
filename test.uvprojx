@@ -429,6 +429,16 @@
               <FileType>1</FileType>
               <FilePath>.\User\JY61.c</FilePath>
             </File>
+            <File>
+              <FileName>detect.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\User\detect.c</FilePath>
+            </File>
+            <File>
+              <FileName>detect.h</FileName>
+              <FileType>5</FileType>
+              <FilePath>.\User\detect.h</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
